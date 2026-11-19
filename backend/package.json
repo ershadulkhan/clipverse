@@ -1,0 +1,28 @@
+{
+  "name": "clipverse-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy && wrangler d1 migrations apply DB --remote",
+    "db:migrate": "wrangler d1 migrations apply DB --remote",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "hono": "^4.6.14"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261119.1",
+    "typescript": "^5.7.2",
+    "wrangler": "^4.165.0"
+  },
+  "cloudflare": {
+    "bindings": {
+      "CLIPT_TOKEN": {
+        "description": "Your private **sync token** — a long random password (30+ letters and numbers). Save it in your password manager: you type it once into the Clipverse extension, and anyone who has it can read your clips."
+      }
+    }
+  }
+}

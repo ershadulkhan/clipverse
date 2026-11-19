@@ -1,0 +1,37 @@
+# Clipverse server — Cloudflare Workers + D1 + Workers KV (all free tier, no card needed).
+# The database and image storage are created automatically on first deploy (no IDs needed here).
+name = "clipt"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "clipt-db"
+migrations_dir = "migrations"
+
+# Image bytes (created automatically on first deploy).
+[[kv_namespaces]]
+binding = "IMAGES"
+
+# Delete expired, unpinned clips every 6 hours (runs on Cloudflare, not your devices).
+[triggers]
+crons = ["0 */6 * * *"]
+
+[vars]
+RETENTION_DAYS = "30"
+MAX_UPLOAD_MB = "24"
+# Optional Firebase Cloud Messaging (push desktop clips to Android).
+# Public client config — safe to commit. Leave empty to disable push.
+FCM_PROJECT_ID = ""
+FCM_APP_ID = ""
+FCM_API_KEY = ""
+FCM_SENDER_ID = ""
+
+# Secrets (never commit these):
+#   npx wrangler secret put CLIPT_TOKEN            # required: your sync token (the Deploy button asks for it)
+#   npx wrangler secret put FCM_SERVICE_ACCOUNT    # optional: Firebase service-account JSON
+
+# Request logs in the Cloudflare dashboard (Workers → clipt → Logs). Free.
+[observability]
+enabled = true
+head_sampling_rate = 1

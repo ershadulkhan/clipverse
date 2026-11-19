@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+/* Clipverse design tokens. Theme: data-theme = system | light | dark | amoled (set by the popup). */
+:root {
+  --canvas: #f7f7f9;
+  --card: #ffffff;
+  --line: #e8e8ed;
+  --ink: #111114;
+  --ink-2: #5c5c66;
+  --ink-3: #9a9aa3;
+  --accent: #eb0028;
+  --accent-soft: #eb002814;
+  --ok: #12a150;
+  --chip: #efeff3;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="amoled"]) {
+    --canvas: #0e0e10;
+    --card: #1a1a1d;
+    --line: #2a2a2e;
+    --ink: #f4f4f6;
+    --ink-2: #a8a8b2;
+    --ink-3: #6e6e78;
+    --accent: #ff2e4c;
+    --accent-soft: #ff2e4c1f;
+    --ok: #2fd27a;
+    --chip: #242428;
+  }
+}
+
+:root[data-theme="dark"] {
+  --canvas: #0e0e10;
+  --card: #1a1a1d;
+  --line: #2a2a2e;
+  --ink: #f4f4f6;
+  --ink-2: #a8a8b2;
+  --ink-3: #6e6e78;
+  --accent: #ff2e4c;
+  --accent-soft: #ff2e4c1f;
+  --ok: #2fd27a;
+  --chip: #242428;
+}
+/* AMOLED: true black canvas so OLED pixels switch off; cards barely lifted. */
+:root[data-theme="amoled"] {
+  --canvas: #000000;
+  --card: #0b0b0c;
+  --line: #1c1c1f;
+  --ink: #f4f4f6;
+  --ink-2: #a3a3ad;
+  --ink-3: #66666f;
+  --accent: #ff2e4c;
+  --accent-soft: #ff2e4c1f;
+  --ok: #2fd27a;
+  --chip: #151517;
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-card: var(--card);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-ok: var(--ok);
+  --color-chip: var(--chip);
+  --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+html, body {
+  margin: 0;
+  width: 380px;
+  height: 560px;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+#root { height: 100%; }
+
+.scroll-thin { scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+
+button { cursor: pointer; }
+button:focus-visible, input:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@keyframes pop { from { transform: scale(.96); opacity: 0 } to { transform: none; opacity: 1 } }
+.anim-pop { animation: pop .16s ease-out; }
+@media (prefers-reduced-motion: reduce) { .anim-pop { animation: none } }

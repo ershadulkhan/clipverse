@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Clipverse</string>
+    <string name="send_to_clipt">Send to Clipverse</string>
+    <string name="tile_label">Send clipboard</string>
+    <string name="widget_label">Clipverse · Copy latest</string>
+    <string name="widget_text">Copy latest</string>
+    <string name="shortcut_copy_latest">Copy latest</string>
+    <string name="shortcut_send_clipboard">Send clipboard</string>
+    <string name="channel_clips">Clips from your computer</string>
+</resources>

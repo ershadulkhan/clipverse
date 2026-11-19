@@ -1,0 +1,2 @@
+# Required: your private sync token (a long random password). Keep it secret.
+CLIPT_TOKEN=
