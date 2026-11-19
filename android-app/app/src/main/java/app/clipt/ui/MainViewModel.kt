@@ -121,6 +121,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
      */
     fun ensureAutoSendRunning() {
         val app = getApplication<Application>()
+        // Default: with Shizuku installed, auto-send is on unless the user turned it off.
+        if (!prefs.autoSendChosen && prefs.isPaired && ShizukuSync.isInstalled(app)) {
+            prefs.autoSend = true
+            _state.update { it.copy(autoSend = true) }
+        }
         if (!prefs.autoSend || !prefs.isPaired || !prefs.syncEnabled) {
             // Should be off: make sure nothing is left running (e.g. a watcher from before an update).
             AutoSendService.stop(app)
@@ -131,7 +136,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             // Shizuku present: always use it (even if its binder hasn't arrived yet).
             AutoSendService.stop(app)
             ShizukuSync.whenReady {
-                if (prefs.autoSend && prefs.syncEnabled && ShizukuSync.hasPermission()) ShizukuSync.start(app)
+                when {
+                    !prefs.autoSend || !prefs.syncEnabled -> Unit
+                    ShizukuSync.hasPermission() -> ShizukuSync.start(app)
+                    !prefs.shizukuAsked -> { prefs.shizukuAsked = true; requestShizuku() } // once, automatically
+                }
                 refreshPermissions()
             }
         } else {
@@ -192,6 +201,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             runCatching { api().config() }.getOrNull()?.let { cfg ->
                 prefs.fcmConfig = cfg.fcm
                 _state.update { it.copy(pushAvailable = cfg.fcm != null, retentionDays = cfg.retentionDays) }
+                // Push is what makes computer → phone automatic, so it's on by default whenever the
+                // server supports it (no notification permission is needed to fill the clipboard).
+                if (cfg.fcm != null && !prefs.pushEnabled && !prefs.pushOptOut) {
+                    if (Push.enable(getApplication<Application>())) _state.update { it.copy(pushEnabled = true) }
+                }
             }
             try {
                 val list = api().list(limit = 100)
@@ -222,7 +236,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 runCatching { api().registerDevice() }
                 _state.value = snapshot().copy(retentionDays = cfg.retentionDays)
                 message("Paired ✓")
-                refresh()
+                refresh()               // also switches push on when the server supports it
+                ensureAutoSendRunning() // and auto-send (via Shizuku) when available
                 onDone(true)
             } catch (e: Exception) {
                 message("Couldn't pair: ${e.message}")
@@ -306,6 +321,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     fun setPush(enabled: Boolean) {
         viewModelScope.launch {
+            prefs.pushOptOut = !enabled
             if (enabled) {
                 val ok = Push.enable(getApplication<Application>())
                 if (!ok) message("Couldn't enable push — check your Firebase setup")

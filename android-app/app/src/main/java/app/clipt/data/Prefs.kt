@@ -44,6 +44,19 @@ class Prefs(context: Context) {
         get() = sp.getBoolean(K_AUTO_SEND, false)
         set(value) = sp.edit { putBoolean(K_AUTO_SEND, value) }
 
+    /** True once the user (not a default) has chosen on/off for auto-send. */
+    val autoSendChosen: Boolean get() = sp.contains(K_AUTO_SEND)
+
+    /** Set when the user switches push off, so we don't switch it back on by default. */
+    var pushOptOut: Boolean
+        get() = sp.getBoolean(K_PUSH_OPT_OUT, false)
+        set(value) = sp.edit { putBoolean(K_PUSH_OPT_OUT, value) }
+
+    /** We asked Shizuku for permission once automatically; never nag again. */
+    var shizukuAsked: Boolean
+        get() = sp.getBoolean(K_SHIZUKU_ASKED, false)
+        set(value) = sp.edit { putBoolean(K_SHIZUKU_ASKED, value) }
+
     /** Master switch: when off, nothing syncs automatically (manual sending still works). */
     var syncEnabled: Boolean
         get() = sp.getBoolean(K_SYNC, true)
@@ -81,6 +94,8 @@ class Prefs(context: Context) {
         private const val K_AUTO_RECEIVE = "auto_receive"
         private const val K_THEME = "theme_mode"
         private const val K_SYNC = "sync_enabled"
+        private const val K_PUSH_OPT_OUT = "push_opt_out"
+        private const val K_SHIZUKU_ASKED = "shizuku_asked"
         private const val K_AUTO_SEND = "auto_send"
         private const val K_FCM = "fcm_config"
 
