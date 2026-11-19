@@ -463,7 +463,8 @@ fun SettingsSheet(vm: MainViewModel, state: UiState, onDismiss: () -> Unit) {
                     enabled = true,
                     onChange = { on ->
                         vm.setAutoSend(on)
-                        if (on && !state.shizukuRunning && !state.hasOverlay) {
+                        // The overlay permission is only for the no-Shizuku fallback.
+                        if (on && !state.shizukuInstalled && !state.hasOverlay) {
                             context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}")))
                         }
                     },

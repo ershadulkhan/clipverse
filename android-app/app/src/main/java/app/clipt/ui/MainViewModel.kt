@@ -157,7 +157,13 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         prefs.autoSend = on
         _state.update { it.copy(autoSend = on) }
         if (on) {
-            if (ShizukuSync.isRunning() && !ShizukuSync.hasPermission()) requestShizuku() else ensureAutoSendRunning()
+            val app = getApplication<Application>()
+            if (ShizukuSync.isInstalled(app)) {
+                // Wait for Shizuku's binder (it may not have arrived yet), then ask for permission if needed.
+                ShizukuSync.whenReady { if (ShizukuSync.hasPermission()) ensureAutoSendRunning() else requestShizuku() }
+            } else {
+                ensureAutoSendRunning()
+            }
         } else {
             ShizukuSync.stop(getApplication<Application>())
             AutoSendService.stop(getApplication<Application>())
