@@ -68,8 +68,11 @@ jobs:
           CLIPT_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           CLIPT_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           CLIPT_VERSION_CODE: ${{ github.run_number }}
-          CLIPT_VERSION_NAME: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || '0.0.0-dev' }}
+          TAG: ${{ github.ref_name }}
+          IS_TAG: ${{ startsWith(github.ref, 'refs/tags/v') }}
         run: |
+          # "v1.2.3" tag → versionName "1.2.3"; untagged builds are dev builds.
+          if [ "$IS_TAG" = "true" ]; then export CLIPT_VERSION_NAME="${TAG#v}"; else export CLIPT_VERSION_NAME="0.0.0-dev"; fi
           chmod +x gradlew
           ./gradlew --no-daemon assembleRelease
           cp app/build/outputs/apk/release/app-release.apk Clipverse-Android-Universal.apk
