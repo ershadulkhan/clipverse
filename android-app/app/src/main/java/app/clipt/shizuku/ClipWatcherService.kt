@@ -62,6 +62,7 @@ class ClipWatcherService : IClipWatcher.Stub() {
             // Baseline: don't upload whatever was already on the clipboard.
             lastText = readText()?.second
             state = "listening"
+            startStoppedGuard()
         } catch (e: Throwable) {
             state = "error: ${e.javaClass.simpleName}: ${e.message}"
             Log.e(TAG, "could not start", e)
@@ -131,6 +132,34 @@ class ClipWatcherService : IClipWatcher.Stub() {
         }
     }
 
+    /**
+     * vivo/Xiaomi/Oppo force-stop apps swiped out of Recents, and Android then drops their push
+     * messages (computer → phone stops working until the app is opened). This watcher survives
+     * that, so once a minute it checks — one cheap system call — and wakes the app if needed.
+     * Sleeping threads don't wake the device; the check only runs while the phone is awake anyway.
+     */
+    private fun startStoppedGuard() {
+        val pm = runCatching {
+            val b = Class.forName("android.os.ServiceManager").getMethod("getService", String::class.java).invoke(null, "package") as IBinder
+            Class.forName("android.content.pm.IPackageManager\$Stub").getMethod("asInterface", IBinder::class.java).invoke(null, b)
+        }.getOrNull() ?: return
+        val isStopped = pm.javaClass.methods.firstOrNull {
+            it.name == "isPackageStoppedState" && it.parameterTypes.contentEquals(arrayOf(String::class.java, Int::class.javaPrimitiveType))
+        } ?: return
+        Thread {
+            while (true) {
+                Thread.sleep(60_000)
+                val stopped = runCatching { isStopped.invoke(pm, APP, 0) as Boolean }.getOrDefault(false)
+                if (stopped) runCatching {
+                    // 0x20 = FLAG_INCLUDE_STOPPED_PACKAGES, so the broadcast reaches the stopped app.
+                    Runtime.getRuntime().exec(arrayOf("am", "broadcast", "-a", "app.clipt.action.WAKE",
+                        "-n", "$APP/.push.WakeReceiver", "-f", "0x20")).waitFor()
+                    state = "listening · revived app after force-stop"
+                }
+            }
+        }.apply { isDaemon = true; name = "stopped-guard" }.start()
+    }
+
     override fun configure(serverUrl: String, token: String, deviceId: String, deviceName: String) {
         this.serverUrl = serverUrl.trimEnd('/')
         this.token = token
@@ -147,5 +176,6 @@ class ClipWatcherService : IClipWatcher.Stub() {
     companion object {
         private const val TAG = "CliptWatcher"
         private const val SHELL = "com.android.shell"
+        private const val APP = app.clipt.BuildConfig.APPLICATION_ID
     }
 }

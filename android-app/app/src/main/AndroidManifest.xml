@@ -125,6 +125,15 @@
             <meta-data android:name="android.service.quicksettings.TOGGLEABLE_TILE" android:value="false" />
         </service>
 
+        <!-- No-op target the Shizuku watcher pings to clear a vivo-style force-stop (see WakeReceiver). -->
+        <receiver
+            android:name=".push.WakeReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="app.clipt.action.WAKE" />
+            </intent-filter>
+        </receiver>
+
         <service
             android:name=".autosend.AutoSendService"
             android:exported="false"

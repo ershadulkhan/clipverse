@@ -8,7 +8,7 @@ import type { Clip, ClipboardPayload, Msg, Settings } from './lib/types';
  */
 
 const FAST_MS = 4000;
-const SLOW_MS = 60000;
+const SLOW_MS = 30000; // idle: still keeps up, and any keyboard/mouse activity triggers an immediate check
 const MAX_BACKOFF_MS = 5 * 60000;
 // Clipboard watcher: how often to look for a new copy while the user is active.
 const WATCH_MS = 1000;
@@ -137,13 +137,16 @@ async function watchClipboard() {
 
 function applyConfig(next: Settings | null, nextFast: boolean) {
   const serverChanged = next?.serverUrl !== settings?.serverUrl || next?.token !== settings?.token;
+  // Coming back from idle (you touched the keyboard/mouse): check right away, so whatever you
+  // copied on your phone meanwhile is already on this clipboard when you press ⌘V / Ctrl+V.
+  const wokeUp = nextFast && !fast;
   settings = next;
   fast = nextFast;
   if (serverChanged) { lastSeen = 0; seen.clear(); failures = 0; }
   // Sync paused (or not paired): no server checks, no clipboard watching.
   if (!settings || !settings.syncEnabled) { clearTimeout(timer); clearTimeout(watchTimer); return; }
   if (settings.autoSend) void watchClipboard(); else clearTimeout(watchTimer);
-  schedule(serverChanged ? 0 : fast ? FAST_MS : SLOW_MS);
+  schedule(serverChanged || wokeUp ? 0 : fast ? FAST_MS : SLOW_MS);
 }
 
 chrome.runtime.onMessage.addListener((msg: Msg, _sender, sendResponse) => {
